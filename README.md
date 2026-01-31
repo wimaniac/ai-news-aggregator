@@ -12,7 +12,7 @@
 Dự án hoạt động như một "Trợ lý ảo" (Agent): tự động thu thập dữ liệu từ nhiều nguồn (YouTube RSS, Tech Blogs như OpenAI, Anthropic...), lưu trữ có cấu trúc, và sử dụng sức mạnh của **Google Gemini LLM** để tóm tắt nội dung cốt lõi, sau đó gửi báo cáo tổng hợp vào email cá nhân của bạn mỗi 24 giờ.
 
 > **Nguồn cảm hứng & Học tập:**
-> Dự án này được xây dựng dựa trên ý tưởng và hướng dẫn từ video [[Build a Complete End-to-End GenAI Project in 3 Hours](https://www.youtube.com/watch?v=E8zpgNPx8jE)] của kênh YouTube [Dave Ebbelaar].
+> Dự án này được xây dựng dựa trên ý tưởng và hướng dẫn từ video [[Build a Complete End-to-End GenAI Project in 3 Hours](https://www.youtube.com/watch?v=E8zpgNPx8jE)] của kênh YouTube [[Dave Ebbelaar](https://www.youtube.com/@daveebbelaar)].
 
 ---
 
@@ -42,3 +42,4 @@ Dự án hoạt động như một "Trợ lý ảo" (Agent): tự động thu th
 ---
 
 ##  Cấu trúc dự án (Project Structure)
+
