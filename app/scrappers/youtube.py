@@ -46,12 +46,14 @@ class YoutubeScraper:
     
     def get_transcript(self, video_id: str) -> Optional[Transcript]:
         try: 
-            transcript = self.transcript_api.fetch(video_id)
+            transcript = self.transcript_api.fetch(video_id, languages=['vi', 'en'])
             text = " ".join([snippet.text for snippet in transcript.snippets])
             return Transcript(text=text)
         except (TranscriptsDisabled, NoTranscriptFound):
+            print(f"Video {video_id}: Không có phụ đề.")
             return None
         except Exception:
+            print(f"Lỗi không xác định khi lấy transcript {video_id}: {str(e)}")
             return None
         
     def get_latest_videos(self, channel_id: str, hours: int = 24) -> List[ChannelVideo]:
@@ -77,9 +79,9 @@ class YoutubeScraper:
                 v_id = self._extract_video_id(entry.link)
                 
                 videos.append(ChannelVideo(
-                    title=entry.title,            # Sửa lại từ entry.link
-                    url=entry.link,               # Sửa lại từ entry.url
-                    video_id=v_id,                # Sửa lại từ entry.video_id
+                    title=entry.title,           
+                    url=entry.link,               
+                    video_id=v_id,               
                     published_at=published_time,
                     description=entry.get("summary", "")
                 ))
@@ -97,5 +99,8 @@ class YoutubeScraper:
     
 if __name__ == "__main__":
     scraper = YoutubeScraper()
-    videos = scraper.get_latest_videos(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=24)
-    print(videos)
+    # videos = scraper.get_latest_videos(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=24)
+    # transcript = scraper.get_transcript(video_id="Z7duGGiqQp0")
+    channel_videos = scraper.scrape_channel(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=300)
+    for video in channel_videos:
+        print(video)
