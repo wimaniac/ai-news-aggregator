@@ -43,7 +43,7 @@ class WebScraper:
             return full_text
 
         except Exception as e:
-            print(f"Lỗi khi cào nội dung {url}: {e}")
+            print(f"Error scraping content from {url}: {e}")
             return ""
 
     def scrape_rss_feed(self, rss_url: str, hours: int = 24) -> list[Article]:
@@ -52,18 +52,18 @@ class WebScraper:
             response = requests.get(rss_url, headers=self.headers, timeout=10)
             feed = feedparser.parse(response.content)
         except Exception as e:
-            print(f"Lỗi khi tải RSS: {e}")
+            print(f"Error fetching RSS: {e}")
             return []
 
         articles = []
         
-        print(f"Tìm thấy {len(feed.entries)} bài viết từ RSS.")
+        print(f"Found {len(feed.entries)} articles from RSS.")
 
         # Thiết lập mốc thời gian chặn
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         for entry in feed.entries: 
-            print(f"Đang xử lý: {entry.title}")
+            
 
             published_time = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
 
@@ -90,5 +90,5 @@ if __name__ == "__main__":
     
     for article in data:
         print("-" * 50)
-        print(f"Tiêu đề: {article.title}")
-        print(f"Nội dung (500 ký tự đầu): {article.content[:500]}...")
+        print(f"Title: {article.title}")
+        print(f"Content (first 500 chars): {article.content[:500]}...")

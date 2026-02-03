@@ -52,7 +52,7 @@ class YoutubeScraper:
         except (TranscriptsDisabled, NoTranscriptFound):
             print(f"Video {video_id}: Không có phụ đề.")
             return None
-        except Exception:
+        except Exception as e:
             print(f"Lỗi không xác định khi lấy transcript {video_id}: {str(e)}")
             return None
         
