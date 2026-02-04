@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from .models import YoutubeVideo, NewsArticle  # Import từ models của bạn
+from .models import YoutubeVideo, NewsArticle, Digest  # Import từ models của bạn
 from .connection import get_session     # Import hàm lấy session
 
 class Repository:
@@ -41,8 +41,7 @@ class Repository:
             url=article_data['url'],
             source=article_data['source'],
             published_at=article_data['published_at'],
-            content=article_data.get('content'),
-            summary=article_data.get('summary')
+            content=article_data.get('content')
         )
         self.session.add(article)
         self.session.commit()
@@ -78,8 +77,7 @@ class Repository:
                     url=article_data['url'],
                     source=article_data['source'],
                     published_at=article_data['published_at'],
-                    content=article_data.get('content'),
-                    summary=article_data.get('summary')
+                    content=article_data.get('content')
                 )
                 articles_to_add.append(article)
 
@@ -87,28 +85,102 @@ class Repository:
             self.session.add_all(articles_to_add)
             self.session.commit()
 
-    # --- CHỨC NĂNG CẬP NHẬT TÓM TẮT (SAU KHI AI CHẠY) ---
-    def update_article_summary(self, article_id: int, summary: str):
-        article = self.session.query(NewsArticle).filter_by(id=article_id).first()
-        if article:
-            article.summary = summary
-            self.session.commit()
-
-    def update_video_summary(self, video_id: str, summary: str):
-        video = self.session.query(YoutubeVideo).filter_by(video_id=video_id).first()
-        if video:
-            video.summary = summary
-            self.session.commit()
-
-    # --- TRUY VẤN DỮ LIỆU MỚI ĐỂ HIỂN THỊ ---
-    def get_latest_content(self, hours: int = 24):
-        """Lấy tất cả video và bài báo mới nhất để làm báo cáo"""
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    # --- CHỨC NĂNG CHO BẢNG TÓM TẮT (DIGESTS) ---
+    # --- CHỨC NĂNG TÌM NỘI DUNG ĐỂ TÓM TẮT ---
+    def get_articles_without_digest(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        articles = []
+        seen_ids = set()
         
-        articles = self.session.query(NewsArticle).filter(NewsArticle.created_at >= cutoff).all()
-        videos = self.session.query(YoutubeVideo).filter(YoutubeVideo.created_at >= cutoff).all()
+        digests = self.session.query(Digest).all()
+        for d in digests:
+            seen_ids.add(f"{d.article_type}:{d.article_id}")
         
-        return {
-            "articles": articles,
-            "videos": videos
-        }
+        youtube_videos = self.session.query(YoutubeVideo).filter(
+            YoutubeVideo.transcript.isnot(None),
+            YoutubeVideo.transcript != "__UNAVAILABLE__"
+        ).all()
+        for video in youtube_videos:
+            key = f"youtube:{video.video_id}"
+            if key not in seen_ids:
+                articles.append({
+                    "type": "youtube",
+                    "id": video.video_id,
+                    "title": video.title,
+                    "url": video.url,
+                    "content": video.transcript or video.description or "",
+                    "published_at": video.published_at
+                })      
+        if limit:
+            articles = articles[:limit]
+        
+        return articles
+
+    def get_videos_without_digest(self, limit: Optional[int] = 10) -> List[YoutubeVideo]:
+        """
+        Lấy các video YouTube chưa có trong bảng tóm tắt (digests).
+        Sử dụng LEFT JOIN để tìm các video không có digest tương ứng.
+        """
+        # NOTE: This marker is also defined in services/process_youtube.py
+        # It should ideally be moved to a central constants file.
+        TRANSCRIPT_UNAVAILABLE_MARKER = "__UNAVAILABLE__"
+
+        return (
+            self.session.query(YoutubeVideo)
+            .outerjoin(
+                Digest,
+                (Digest.article_id == YoutubeVideo.video_id)
+                & (Digest.article_type == "youtube"),
+            )
+            .filter(Digest.id.is_(None))
+            .filter(YoutubeVideo.transcript.isnot(None))
+            .filter(YoutubeVideo.transcript != TRANSCRIPT_UNAVAILABLE_MARKER)
+            .limit(limit)
+            .all()
+        )
+
+    
+    def create_digest(self, article_type: str, article_id: str, url: str, title: str, summary: str, published_at: Optional[datetime] = None) -> Optional[Digest]:
+        digest_id = f"{article_type}:{article_id}"
+        existing = self.session.query(Digest).filter_by(id=digest_id).first()
+        if existing:
+            return None
+        
+        if published_at:
+            if published_at.tzinfo is None:
+                published_at = published_at.replace(tzinfo=timezone.utc)
+            created_at = published_at
+        else:
+            created_at = datetime.now(timezone.utc)
+        
+        digest = Digest(
+            id=digest_id,
+            article_type=article_type,
+            article_id=article_id,
+            url=url,
+            title=title,
+            summary=summary,
+            created_at=created_at
+        )
+        self.session.add(digest)
+        self.session.commit()
+        return digest
+    
+    def get_recent_digests(self, hours: int = 24) -> List[Dict[str, Any]]:
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        digests = self.session.query(Digest).filter(
+            Digest.created_at >= cutoff_time
+        ).order_by(Digest.created_at.desc()).all()
+        
+        return [
+            {
+                "id": d.id,
+                "article_type": d.article_type,
+                "article_id": d.article_id,
+                "url": d.url,
+                "title": d.title,
+                "summary": d.summary,
+                "created_at": d.created_at
+            }
+            for d in digests
+        ]
+

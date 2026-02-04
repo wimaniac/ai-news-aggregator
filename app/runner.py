@@ -1,8 +1,8 @@
 from typing import List
-from app.config import YOUTUBE_CHANNELS, NEWS_RSS_FEEDS
-from app.scrapers.youtube import YoutubeScraper, ChannelVideo
-from app.scrapers.news import WebScraper, Article
-from app.database.repository import Repository
+from config import YOUTUBE_CHANNELS, NEWS_RSS_FEEDS
+from scrapers.youtube import YoutubeScraper, ChannelVideo
+from scrapers.news import WebScraper, Article
+from database.repository import Repository
 
 def run_scrapers(hours: int = 24) -> dict:
     youtube_scraper = YoutubeScraper()

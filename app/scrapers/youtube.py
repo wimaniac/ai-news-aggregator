@@ -99,8 +99,5 @@ class YoutubeScraper:
     
 if __name__ == "__main__":
     scraper = YoutubeScraper()
-    # videos = scraper.get_latest_videos(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=24)
-    # transcript = scraper.get_transcript(video_id="Z7duGGiqQp0")
-    channel_videos = scraper.scrape_channel(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=300)
-    for video in channel_videos:
-        print(video)
+    videos = scraper.get_latest_videos(channel_id="UConnM5zwOP9vG_LPTYbRsAg", hours=24)
+    transcript = scraper.get_transcript(video_id="Z7duGGiqQp0")

@@ -16,7 +16,6 @@ class YoutubeVideo(Base):
     published_at = Column(DateTime, nullable=False)
     description = Column(Text, nullable=True)
     transcript = Column(Text, nullable=True)
-    summary = Column(Text, nullable=True) 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 # --- 2. Bảng lưu Bài viết (Báo, Blog...) ---
@@ -30,5 +29,16 @@ class NewsArticle(Base):
     source = Column(String, nullable=False) 
     published_at = Column(DateTime, nullable=False)
     content = Column(Text, nullable=True) 
-    summary = Column(Text, nullable=True) 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+# --- 3. Bảng lưu Nội dung tóm tắt (Digest) ---
+class Digest(Base):
+    __tablename__ = "digests"
+    
+    id = Column(String, primary_key=True)
+    article_type = Column(String, nullable=False)
+    article_id = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    title = Column(String, nullable=False)
+    summary = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
